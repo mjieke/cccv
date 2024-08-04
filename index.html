@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>输入历史记录</title>
+        <style>
+            body {
+                font-family: "Arial", sans-serif;
+                background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+            .container {
+                background: #fff;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                width: 100%;
+                max-width: 600px;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .input-section {
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+            }
+            .input-section input {
+                flex-grow: 1;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                margin-right: 10px;
+                font-size: 16px;
+            }
+            .input-section button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                background-color: #007bff;
+                color: #fff;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background-color 0.3s;
+            }
+            .input-section button:hover {
+                background-color: #0056b3;
+            }
+            .history-list {
+                list-style-type: none;
+                padding: 0;
+                flex-grow: 1;
+                overflow-y: auto;
+            }
+            .history-list li {
+                margin-bottom: 10px;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .history-list .timestamp {
+                color: #666;
+                font-size: 0.8em;
+            }
+            .history-list .content {
+                flex-grow: 1;
+                margin-left: 10px;
+            }
+            .history-list .copy-btn,
+            .history-list .delete-btn {
+                margin-left: 10px;
+                cursor: pointer;
+                color: #007bff;
+                text-decoration: underline;
+                transition: color 0.3s;
+            }
+            .history-list .copy-btn:hover,
+            .history-list .delete-btn:hover {
+                color: #0056b3;
+            }
+            .history-list .copy-btn.clicked {
+                color: green;
+            }
+            .history-list .delete-btn {
+                color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="input-section">
+                <input
+                    type="text"
+                    id="inputBox"
+                    placeholder="输入内容"
+                    onkeydown="handleKeyDown(event)"
+                />
+                <button onclick="addToList()">添加</button>
+            </div>
+            <ul class="history-list" id="historyList">
+                <!-- 历史记录将在这里动态添加 -->
+            </ul>
+        </div>
+
+        <script>
+            // 加载历史记录
+            function loadHistory() {
+                const historyList = document.getElementById("historyList");
+                const history =
+                    JSON.parse(localStorage.getItem("history")) || [];
+
+                history.forEach((item) => {
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `<span class="timestamp">${item.timestamp}</span> <span class="content">${item.content}</span> <span class="copy-btn" onclick="copyToClipboard('${item.content}', this)">复制</span> <span class="delete-btn" onclick="deleteItem('${item.timestamp}', this)">删除</span>`;
+                    historyList.insertBefore(listItem, historyList.firstChild);
+                });
+            }
+
+            // 保存历史记录
+            function saveHistory() {
+                const historyList = document.getElementById("historyList");
+                const history = [];
+
+                historyList.querySelectorAll("li").forEach((li) => {
+                    history.push({
+                        timestamp: li.querySelector(".timestamp").textContent,
+                        content: li.querySelector(".content").textContent,
+                    });
+                });
+
+                localStorage.setItem("history", JSON.stringify(history));
+            }
+
+            // 添加到列表
+            function addToList() {
+                const inputBox = document.getElementById("inputBox");
+                const historyList = document.getElementById("historyList");
+                const inputValue = inputBox.value.trim();
+
+                if (inputValue !== "") {
+                    const timestamp = new Date().toLocaleString();
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `<span class="timestamp">${timestamp}</span> <span class="content">${inputValue}</span> <span class="copy-btn" onclick="copyToClipboard('${inputValue}', this)">复制</span> <span class="delete-btn" onclick="deleteItem('${timestamp}', this)">删除</span>`;
+                    historyList.insertBefore(listItem, historyList.firstChild);
+                    inputBox.value = "";
+
+                    saveHistory();
+                }
+            }
+
+            // 复制到剪贴板
+            function copyToClipboard(text, button) {
+                const tempInput = document.createElement("input");
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+
+                // 添加点击特效
+                button.classList.add("clicked");
+                setTimeout(() => {
+                    button.classList.remove("clicked");
+                }, 300);
+            }
+
+            // 删除列表项
+            function deleteItem(timestamp, button) {
+                const listItem = button.closest("li");
+                listItem.remove();
+                saveHistory();
+            }
+
+            // 处理按键事件
+            function handleKeyDown(event) {
+                if (event.key === "Enter") {
+                    addToList();
+                }
+            }
+
+            // 页面加载时加载历史记录
+            window.onload = loadHistory;
+        </script>
+    </body>
+</html>
